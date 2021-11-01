@@ -1,1 +1,0 @@
-# Estadistica-2-TukeyTukeyTukeyTa
