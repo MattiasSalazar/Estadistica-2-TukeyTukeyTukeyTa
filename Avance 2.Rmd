@@ -1,0 +1,216 @@
+---
+title: "Avance 2"
+author: "Tukey Tukey Tukey Ta"
+date: "30/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+#### **Grupo:** Tukey Tukey Tukey Ta      
+      
+#### **Integrantes:**      
+* Paz Berru, Juan Antonio       
+* Salazar Rodriguez, Mattias Gustavo   
+     
+#### **Repositorio de GitHub**:    
+https://github.com/MattiasSalazar/Estadistica-2-TukeyTukeyTukeyTa.git     
+           
+#### **Tema:** Factores sociales y económicos que influyeron en la opción de voto de las elecciones presidenciales de Perú del 2016      
+       
+#### **Pregunta de investigación:** ¿En qué medida factores económicos y sociales influyeron en la opción de voto en la primera vuelta de las elecciones presidenciales de Perú en el 2016?         
+        
+#### **Base de Datos:** LAPOP: Perú, 2019     
+       
+#### **Variable Dependiente**: ¿Por quién votó para Presidente en la primera vuelta de las últimas elecciones
+presidenciales de 2016?         
+      
+#### **Variables Independientes**:           
+    
+* Sexo   
+* Edad
+* ¿Considera usted que su situación económica actual es mejor, igual o peor que la de hace doce meses?
+* ¿En los últimos 12 meses ha participado en una manifestación o protesta pública?
+* Nivel de satisfacción con la calidad de los servicios de salud públicos
+* Si tiene afinidad con algún partido político
+* ¿Qué tan de acuerdo o en desacuerdo está usted con la siguiente frase? Cuando la madre trabaja fuera de la casa, los hijos sufren
+*¿Usted o alguien en su casa recibe ayuda periódica en dinero, alimento o en productos de parte del gobierno, sin contar las pensiones?
+* ¿Es beneficiario del programa "Juntos"?
+* ¿A qué se dedica usted principalmente?    
+      
+#### **Introducción**:     
+    
+En el 2016 se llevaron a cabo las elecciones presidenciales en Perú las cuales se desarrollaron en dos vueltas ya que ninguno de los candidatos alcanzó a superar el 50% de los votos. Sobre este proceso mucho se ha escrito, pero la mayoría se aboca a explicar los resultados de la segunda vuelta ya que finalmente es dónde se consolida quién será el presidente del Perú por los siguientes cinco años. En ese sentido, se encuentra pertinente hacer un estudio estadístico de la primera vuelta electoral con miras a ofrecer una visión sobre las variables que habían influido en el resultado. Este foco en la primera vuelta se justifica ya que en esta instancia es donde en verdad se ve el candidato elegido voluntariamente por las personas y no por descarte de escoger “al mal menor” como muchas veces sucede en la segunda vuelta. Algo muy interesante que se encuentran en las entrevistas de Cué y Fowks (2016)  previas votaciones de 2016 es que uno de los entrevistados a favor de Pedro Pablo Kuczynski señalaba que lo hacía por lo que representaba, la continuidad del modelo económico llevado, a diferencia de Verónika Mendoza que la asosiaba con el terrorismo. Lo interesante de esta entrevista es que el señor pertenecia a la alta clase limeña y tenía 77 años por lo que apelaba a su experiencia sobre el terrorismo en el Perú y encontraba en PPK alguien en quién confiar. Luego se puede encontrar algo muy valioso en el trabajo de Ferrari y Angulo (2016) los que comentan que la exclusión de César Acuña y Julio Guzmán. Para estos autores el gran beneficiado fue PPK ya que la audiencia jóven, que lo era en su mayoría, de Julio Guzmán pasaron a votar a favor de Pedro Pablo Kuczynski mientras que el vacío que dejó Acuña se distribuyó sin un favorito. Sin embargo, otra candidata beneficiada de la exclusión de Acuña y Guzmán fue Verónika Mendoza la cual simpatizaba con un amplio espectro juvenil por las propuestas progresistas que tenía (Pighi, 2016). A esto Cué y Fowks (2016) agregan que existe otro sector que simpatizaba con Mendoza por el origen humilde de esta candidata y por ser de provincia. Luego se encuentra Keiko Fujimori que según Medina (2018) representa un movimiento político extremadamente fuerte en el siglo XXI. A esto Pighi (2016) complementa acotando que el legado de su padre y lo que se recuerda en ciertos sectores que hizo es lo que hace a la figura de Keiko Fujimori como una candidata siempre fuerte en las elecciones. En consecuencia a lo expuesto hasta aquí se evidencia que los tres candidatos más fuertes de la primera vuelta son explicados por diferentes factores, pero a manera de complemento de entender dichas elecciones se propone crear un modelo de regresión multinomial, para determinar de qué manera ciertas variables socioeconómicas influyeron en la decisión de voto.           
+           
+```{r include=FALSE}
+library(rio)
+library(fastDummies)
+library(reshape2)
+library(DescTools)
+library(MASS)
+library(dplyr)
+library(RVAideMemoire)
+library(car)
+library(tidyverse)
+library(psych)
+library(descr)
+library(nnet)
+library(survey)
+library(modeest)
+```
+     
+```{r}
+data=import("LAPOP_PERU_2019.dta")
+```
+   
+## Análisis Exploratorio de Datos:   
+
+En primer lugar, se recodificará a las variables independientes y la dependiente, según el cuestionario de LAPOP.     
+```{r}
+data$q1<-as.factor(data$q1)
+levels(data$q1)<-c("hombre","mujer")
+data$idio2 <- recode(data$idio2, "1=3; 3=1")
+data$idio2<-as.ordered(data$idio2)
+levels(data$idio2)<-c("peor","igual","mejor")
+data$prot3<-as.factor(data$prot3)
+levels(data$prot3)<-c("si","no")
+data$sd6new2 <- recode(data$sd6new2, "4=1; 3=2;2=3;1=4")
+data$sd6new2<-as.ordered(data$sd6new2)
+levels(data$sd6new2)<-c("muy_insatisfecho","insatisfecho","satisfecho","muy_satisfecho")
+data$vb10<-as.factor(data$vb10)
+levels(data$vb10)<-c("si","no")
+data$vb3n <- recode(data$vb3n, "0=97;1104=1177; 1105=1177;1106=1177;1107=1177;1108=1177")
+data$vb3n<-as.factor(data$vb3n)
+levels(data$vb3n)<-c("Ninguno","Pedro Pablo Kuczynski","Keiko Fujimori","Verónika Mendoza","Otro")
+data$vb58 <- recode(data$vb58, "4=1; 3=2;2=3;1=4")
+data$vb58<-as.ordered(data$vb58)
+levels(data$vb58)<-c("muy_en_desacuerdo","en_desacuerdo","de_acuerdo","muy_de_acuerdo")
+data$wf1<-as.factor(data$wf1)
+levels(data$wf1)<-c("si","no")
+data$cct1b<-as.factor(data$cct1b)
+levels(data$cct1b)<-c("si","no")
+data$ocup4a <- recode(data$ocup4a, "2=1; 7=3")
+data$ocup4a<-as.factor(data$ocup4a)
+levels(data$ocup4a)<-c("trabaja","no_trabaja","estudiante","hogar","jubilado")
+```
+    
+```{r}
+data1=subset(data, select = c(q1,q2,idio2,prot3,sd6new2,vb10,vb3n,vb58,wf1,cct1b,ocup4a))
+data1=na.omit(data1)
+str(data1)
+```
+    
+Podemos ver que todas las variables han sido modificadas para que puedan ser utilizadas correctamente. A continuación observaremos un pequeño resumen de cada variable.   
+    
+Voto en la primera vuelta:
+```{r}
+attach(data1)
+table(vb3n)
+```
+
+
+Sexo:   
+```{r}
+table(q1)
+```
+     
+Edad:   
+```{r}
+summary(q2)
+mlv(data1$q2, method = "mfv")
+var(q2)
+sd(q2)
+```
+       
+Comparación de situación económica:   
+```{r}
+table(idio2)
+```
+     
+Participación en protestas:
+```{r}
+table(prot3)
+```
+     
+Nivel de satisfacción con servicios de salud pública:
+```{r}
+table(sd6new2)
+```
+     
+Afinidad con algún partido político:
+```{r}
+table(vb10)
+```
+     
+Nivel de acuerdo con la frase: "Cuando la madre trabaja fuera de la casa, los hijos sufren"
+```{r}
+table(vb58)
+```
+     
+Recibe ayuda económica del Gobierno:
+```{r}
+table(wf1)
+```
+     
+Beneficiario del programa Juntos:
+```{r}
+table(cct1b)
+```
+      
+Ocupación actual:  
+```{r}
+table(ocup4a)
+```
+    
+## Creación de un modelo de regresión:   
+    
+Debido a que la variable independiente es una nominal no dicotómica, el modelo más óptimo es el multinomial. En esta primera parte se llevará a cabo un modelo de regresión que incluya todas las variables, para tener una primera aproximación a su relación. Sin embargo, antes de hacer el modelo hace falta crearle dummies a las variables categóricas que tienen más de 2 valores.   
+    
+```{r}
+data1<-cbind(dummy_cols(data1,  select_columns = c("idio2")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("sd6new2")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("vb58")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("ocup4a")))
+```
+
+     
+```{r}
+modelo1 <- multinom(vb3n ~ q1 + q2 + idio2_peor + idio2_igual + prot3 + sd6new2_muy_insatisfecho + sd6new2_insatisfecho + sd6new2_satisfecho + vb10 + vb58_muy_en_desacuerdo + vb58_en_desacuerdo + vb58_de_acuerdo + wf1 + cct1b + ocup4a_trabaja +  ocup4a_no_trabaja + ocup4a_estudiante +ocup4a_hogar, data = data1)
+summary(modelo1)
+```
+      
+Ahora se comprobará la validez del modelo y de las variables:   
+    
+```{r}
+modelo0=multinom(vb3n ~ 1, data = data1)
+summary(modelo0)
+```
+      
+```{r}
+anova1=anova(modelo0,modelo1)
+anova1
+```
+     
+Notamos que el Chi es diferente de 0, por lo tanto, lo mejor sería utilizar un modelo que tenga menos variables. Se probará con distintos modelos y se probará cual es el más óptimo.             
+        
+#### **Análisis Descriptivo**:        
+     
+Como observamos en el desarrollo del RMD, la variable independiente y casi todas las dependientes son categóricas. Por lo tanto, en cuanto a medidas de tendencia central solo podemos obtener la moda. En el caso de la variable dependiente, PPK fue quien recibió más votos de parte los encuestados, seguido por Keiko y por blanco/viciado. En sexo, hay más hombres que mujeres. En cuanto a la edad, la media es 41,36, la mediana es 40 y la moda es 30. Además, la varianza es 208.8392 y la desviación estándar es 14.45127. Esto significa que los datos no se alejan mucho de la media; sin embargo, la presencia de datos atípicos sí altera este resultado. En cuanto a la situación económica con respecto al año pasado, el valor que corresponde a la moda es "igual". La mayoría no han participado en protestas, y no tienen afinidad con un partido político. La mayoría se sietne "insatisfecha" con los servicios de salud públicos. La mayoría trabaja, no es beneficiario de ningún tipo de subsidios ni origramas de apoyo del Gobierno, y están "de acuerdo" con que si la madre trabaja los hijos sufren.     
+Para seguir adelante con la investigación, se llevarán a cabo distintos modelos de regresión multinomial, utilizando las distintas variables. De esta manera encontraremos el modelo más óptimo y podremos responder a nuestra pregunta de investigación. Además de las regresiones, utilizaremos un STARGAZER para poder comparar a los modelos y determinar cual es el más óptimo.    
+              
+#### **Bibliografia**:  
+     
+Cué, C. E., & Fowks, J. (2016). Kuczynski pasaría a la segunda vuelta en Perú con la vencedora Fujimori. El País. https://elpais.com/internacional/2016/04/10/actualidad/1460302444_537523.html      
+       
+Ferrari Haines, A., & Angulo, M. (2016). Elecciones presidenciales peruanas 2016: La fuerza del antifujimorismo. Conjuntura Austral, 7(37), 67-80. doi:https://doi.org/10.22456/2178-8839.67695         
+      
+LAPOP. (2019). Barómetro de las Américas. Recuperado 29 de octubre de 2021
+https://www.vanderbilt.edu/lapop/peru/ABPer18-v12.0.7.1-Spa-190214_W.pdf     
+      
+Medina, I. (2018). Perú 2016: Gobierno y elecciones presidenciales. En I. Medina (Ed), Contextualizaciones latinoamericanas Avances y retrocesos de la democracia. (191-209). Guadalajara,México: Universidad de Guadalajara Centro Universitario de Ciencias Sociales y Humanidades Departamento de Estudios Ibéricos y Latinoamericanos.     
+     
+Pighi, P. (2016). Tres puntos fundamentales para entender las elecciones presidenciales en Perú. BBC News Mundo. https://www.bbc.com/mundo/noticias/2016/04/160330_america_latina_elecciones_presidenciales_peru_2016_elementos_fundamentales_ppb      
+        
+
