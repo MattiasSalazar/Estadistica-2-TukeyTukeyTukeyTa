@@ -1,0 +1,339 @@
+---
+title: "Trabajo Final"
+author: "Tukey Tukey Tukey Ta"
+date: "30/10/2021"
+output:
+  rmdformats::readthedown:
+    code_folding: show
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+pkgdown:
+  as_is: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message=FALSE, warning=FALSE)
+```
+
+### **Grupo:**  
+        
+Tukey Tukey Tukey Ta       
+        
+### **Integrantes:**    
+     
+* Paz Berru, Juan Antonio       
+* Salazar Rodriguez, Mattias Gustavo   
+     
+### **Repositorio de GitHub:**   
+     
+https://github.com/MattiasSalazar/Estadistica-2-TukeyTukeyTukeyTa.git     
+           
+### **Tema:**    
+     
+Factores sociales y económicos que influyeron en la opción de voto de las elecciones presidenciales de Perú del 2016         
+           
+### **Pregunta de investigación:**
+      
+¿En qué medida factores económicos y sociales influyeron en la opción de voto en la primera vuelta de las elecciones presidenciales de Perú en el 2016?           
+           
+### **Base de Datos:**    
+     
+LAPOP: Perú, 2019     
+         
+### **Variable Dependiente:**    
+     
+¿Por quién votó para Presidente en la primera vuelta de las elecciones presidenciales de 2016?         
+        
+### **Variables Independientes:**           
+    
+* Sexo   
+* Edad
+* ¿Considera usted que su situación económica actual es mejor, igual o peor que la de hace doce meses?
+* ¿En los últimos 12 meses ha participado en una manifestación o protesta pública?
+* Nivel de satisfacción con la calidad de los servicios de salud públicos
+* Si tiene afinidad con algún partido político  
+* ¿Qué tan de acuerdo o en desacuerdo está usted con la siguiente frase? Cuando la madre trabaja fuera de la casa, los hijos sufren     
+* ¿Usted o alguien en su casa recibe ayuda periódica en dinero, alimento o en productos de parte del gobierno, sin contar las pensiones?   
+* ¿A qué se dedica usted principalmente?        
+      
+# **Introducción**     
+    
+El comportamiento electoral es un tópico muy estudiado dentro de la ciencia política. Mucho se ha escrito sobre ello y existen muchas posturas acerca del caso. En ese sentido, Blais (2006) identifica que el debate ha girado en torno a variables institucionales y socioeconómicas. Sin embargo, existen otras variables interesantes que pueden ser analizadas y expandir los estudios de comportamiento electoral. Un ejemplo de ellas puede ser la edad. Ahora, esta variable puede ser tomada de manera institucional como Contretas y Navío (2013) lo hacen ya que estos autores plantean la discusión sobre ¿Cuál debería ser la edad mínima para poder votar? Y analizan a partir de ello cuales son las consecuencias institucionales que puede traer una disminución o un aumento de la edad que se tiene actualmente.
+En contraste, también puede tomarse la variable edad de otra manera. Esta consiste en analizar la influencia de la edad a la hora de votar. Una forma de verla la ilustra Morales y Lara (2019) ya que ellos estudian la forma en que la edad de los candidatos afecta en su relación con el electorado. Sin embargo, existe una manera distinta la cual consiste en ver cómo la edad del electorado influye al momento de decidir por quién votar. Esta última idea es la que se pretende desarrollar en el presente trabajo debido a los datos con los que se cuenta y porque existe muy poca investigación sobre esta forma de usar la edad en los procesos electorales.     
+      
+Ahora, una aproximación muy común que se encuentra es que los jóvenes votan por candidatos más progresistas; mientras, que las personas con mayor edad votan por candidatos más conservadores (CLINIC, 2021). Además, esto podría hacer parecer de que los jóvenes votan por candidatos jóvenes lo cual es una idea equivocada ya que se ve que la actual generación vota de acuerdo a causas puntuales y las posturas que tienen acerca de ella (PRIMICIAS, 2021). En ese sentido, se ve que este grupo con edades similares no vota pensando en ideales políticos tradicionales, como antes se hacía mediante los partidos, sino busca solucionar problemas contemporáneos sociales que consideran importantes.     
+      
+Trayendo esto al Perú, se ve que esto no se encuentra tan diferenciado de la realidad. Grompone (2016) asegura que la situación política de este país es que se vive una democracia sin partidos políticos. La razón para Zavaleta (2014) se debe a que después del Fujimorismo los incentivos endógenos y exógenos para formar partidos políticos desaparecieron y ahora solo quedan políticos que usan partidos cascarones para llegar al poder. Debido a este contexto de la política peruana actual, el pensar que grupos de edades diferenciadas voten debido a ideales de partidos políticos es muy complicado porque en el Perú no existen partidos políticos, salvo el movimiento fujimorista, pero más que un partido es un legado político familiar.    
+     
+En consecuencia a esta realidad, el presente trabajo busca indagar que tendencias políticas hay dentro de grupos de edad al momento de votar, aún cuando en la realidad no haya partido políticos. Esto se hará de acuerdo a otras variables que se complementarán con la edad que serán sociales y económicas.             
+     
+# **Metodología**           
+      
+La metodología que se utilizará será la siguiente. Se buscará hacer un modelo de regresión logística multinomial independientes previamente definidas, pero antes de ello se agrupará mediante clústers para  evidenciar  la importancia de la edad y ver cómo se agrupa la muestra que se tiene. La regresión que se armará al final tendrá como objetivo predecir de acuerdo a las caracterísitcas de las variables, el candidato por el cual se votó. Las opciones serán PPK, Keiko, Verónica Mendoza, abstención y nulo.  La base que se utilizará para ello es LAPOP 2019 la cual es de acceso público.     
+     
+# **Análisis Descriptivo**   
+    
+```{r include=FALSE}
+library(rio)
+library(fastDummies)
+library(reshape2)
+library(rmdformats)
+library(DescTools)
+library(MASS)
+library(dplyr)
+library(RVAideMemoire)
+library(car)
+library(tidyverse)
+library(psych)
+library(descr)
+library(nnet)
+library(survey)
+library(modeest)
+library(rmdformats)
+library(polycor)
+library(corrplot)
+library(factoextra)
+library(ggcorrplot)
+library(FactoMineR)
+library(BBmisc)
+library(cluster)
+library(NbClust)
+library(tidyr)
+library(ggplot2)
+library(rgdal)
+library(lmtest)
+library(stargazer)
+```
+     
+```{r}
+data=import("LAPOP_PERU_2019.dta")
+```
+       
+     
+### **Análisis Exploratorio de Datos:**   
+
+En primer lugar, se recodificará a las variables independientes y la dependiente, según el cuestionario de LAPOP.     
+```{r}
+data$q1<-as.factor(data$q1)
+levels(data$q1)<-c("hombre","mujer")
+data$idio2 <- recode(data$idio2, "1=3; 3=1")
+data$idio2<-as.ordered(data$idio2)
+levels(data$idio2)<-c("peor","igual","mejor")
+data$prot3<-as.factor(data$prot3)
+levels(data$prot3)<-c("si","no")
+data$sd6new2 <- recode(data$sd6new2, "4=1; 3=2;2=3;1=4")
+data$sd6new2<-as.ordered(data$sd6new2)
+levels(data$sd6new2)<-c("muy_insatisfecho","insatisfecho","satisfecho","muy_satisfecho")
+data$vb10<-as.factor(data$vb10)
+levels(data$vb10)<-c("si","no")
+data$vb3n <- recode(data$vb3n, "0=97;1104=1177; 1105=1177;1106=1177;1107=1177;1108=1177")
+data$vb3n<-as.factor(data$vb3n)
+levels(data$vb3n)<-c("Ninguno","Pedro Pablo Kuczynski","Keiko Fujimori","Verónika Mendoza","Otro")
+data$vb58 <- recode(data$vb58, "4=1; 3=2;2=3;1=4")
+data$vb58<-as.ordered(data$vb58)
+levels(data$vb58)<-c("muy_en_desacuerdo","en_desacuerdo","de_acuerdo","muy_de_acuerdo")
+data$wf1<-as.factor(data$wf1)
+levels(data$wf1)<-c("si","no")
+data$ocup4a <- recode(data$ocup4a, "2=1; 7=3")
+data$ocup4a<-as.factor(data$ocup4a)
+levels(data$ocup4a)<-c("trabaja","no_trabaja","estudiante","hogar","jubilado")
+```
+    
+```{r}
+data1=subset(data, select = c(q1,q2,idio2,prot3,sd6new2,vb10,vb3n,vb58,wf1,ocup4a))
+data1=na.omit(data1)
+str(data1)
+```
+    
+Podemos ver que todas las variables han sido modificadas para que puedan ser utilizadas correctamente. A continuación observaremos un pequeño resumen de cada variable.   
+    
+Voto en la primera vuelta:
+```{r}
+attach(data1)
+table(vb3n)
+```
+
+
+Sexo:   
+```{r}
+table(q1)
+```
+     
+Edad:   
+```{r}
+summary(q2)
+mlv(data1$q2, method = "mfv")
+var(q2)
+sd(q2)
+```
+       
+Comparación de situación económica:   
+```{r}
+table(idio2)
+```
+     
+Participación en protestas:
+```{r}
+table(prot3)
+```
+     
+Nivel de satisfacción con servicios de salud pública:
+```{r}
+table(sd6new2)
+```
+     
+Afinidad con algún partido político:
+```{r}
+table(vb10)
+```
+     
+Nivel de acuerdo con la frase: "Cuando la madre trabaja fuera de la casa, los hijos sufren"
+```{r}
+table(vb58)
+```
+     
+Recibe ayuda económica del Gobierno:
+```{r}
+table(wf1)
+```
+          
+Ocupación actual:  
+```{r}
+table(ocup4a)
+```
+      
+### **Reducción de dimensiones:**           
+   
+Ya que solo contamos con una variable númerica (edad), no es posible llevar a cabo un análisis factorial o por componentes principales. Sin embargo, podemos crear clusters según la edad para dividir a nuestras observaciones en grandes grupos y no tratar a la edad como una variable numéria. De esta manera, generelizaremos más la información y facilitaremos su análisis.  
+   
+Para ello primero crearemos un subset con la variable edad, y a partir de él haremos el análisis.     
+    
+```{r}
+edad=select(data1, "q2")
+```
+    
+A continuación, determinaremos el número ideal de clusters. Yo considero que sería oportuno dividir en tres grupos: jóvenes, adultos y adultos mayores. Estos 3 grandes grupos podrían representar bien a la población mayor de edad. Sin embargo, debemos consultar con R para respaldar nuestra propuesta.   
+    
+```{r}
+mdis1 <- get_dist(edad, method = "euclidean")
+fviz_dist(mdis1, gradient = list(low = "blue", mid = "white", high = "red"))
+```
+     
+Debido a que nuestros casos son personas, tenemos una gran cantidad. También notamos según las distancias que se pueden distinguir grupos cercanos y lejanos, al igual que medios. Esto nos podría indicar la posible división en 3 clusters. A continuación, realizaremos un NBClust para respaldar la propuesta.   
+   
+   
+```{r}
+nclust<-NbClust(edad, distance = "euclidean", min.nc=2, max.nc=10, method = "kmeans", index = "all")
+fviz_nbclust(nclust)
+```
+     
+Notamos que R no nos recomienda trabajar con clusters. Sin embargo, por el propósito de esta investigación, sí trabajaremos con 3 clusters. Ahora pasaremos a crearlos.      
+    
+```{r}
+km <- kmeans(edad, centers = 3, nstart = 25)
+km
+```
+         
+Notamos que hemos creado 3 clusters. El primero tiene como media 63.01951 años, por lo tanto corresponde a adultos mayores. El segunto tiene como media 44.32822 años, por lo tanto corresponde a adultos. Por último, el tercero tiene como media 28.09559 años, siendo este el correspondiente a jóvenes adultos. Debido a que solo estamos trabajando con una variable, no es posible realizar un gráfico de centroides. Por lo tanto, observaremos la distribución en un dendrograma.  
+    
+```{r}
+rs <- hcut(edad, k = 3, stand = TRUE, hc_method = "ward.D")
+fviz_dend(rs, rect = T, cex = 0.5) 
+```
+    
+Notamos que el cluster que representa a la población más jóven es el más grande, mientras que el que representa a la población mayor es el más pequeño. También notamos que debido al gran rango de edad (18-91), el dendrograma puede parecer un poco apretado, sin embargo, cuenta con una buena distribución. A continuación, se añadirán los clusters a la base de datos con las variables que estamos trabajando. También se reconfigurarán para que los grupos estén distribuidos de menor a mayor, además se les asignarán nombres apropiados.     
+     
+```{r}
+data1$edad<-as.factor(km$cluster)
+data1$edad=car::recode(data1$edad, "1=3; 3=1")
+levels(data1$edad)=c("joven","adulto","adulto_mayor")
+summary(data1$edad)
+```
+    
+Ya tenemos la variable lista para ser trabajada en el modelo de regresión.   
+    
+### **Creación de un modelo de regresión:**       
+      
+Debido a que la variable independiente es una nominal no dicotómica, el modelo más óptimo es el multinomial. En esta primera parte se llevará a cabo un modelo de regresión que incluya todas las variables, para tener una primera aproximación a su relación. Sin embargo, antes de hacer el modelo hace falta crearle dummies a las variables categóricas que tienen más de 2 valores.   
+    
+```{r}
+data1<-cbind(dummy_cols(data1,  select_columns = c("idio2")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("sd6new2")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("vb58")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("ocup4a")))
+data1<-cbind(dummy_cols(data1,  select_columns = c("edad")))
+```
+
+     
+```{r}
+mod1 <- multinom(vb3n ~ q1 + idio2_peor + idio2_igual + prot3 + sd6new2_muy_insatisfecho + sd6new2_insatisfecho + sd6new2_satisfecho + vb10 + vb58_muy_en_desacuerdo + vb58_en_desacuerdo + vb58_de_acuerdo + wf1 + ocup4a_trabaja +  ocup4a_no_trabaja + ocup4a_estudiante +ocup4a_hogar+edad_joven+edad_adulto, data = data1)
+summary(mod1)
+```
+     
+Ahora se comprobará la validez del modelo y de las variables:   
+    
+```{r}
+mod0=multinom(vb3n ~ 1, data = data1)
+summary(mod0)
+```
+      
+```{r}
+anova1=anova(mod0,mod1)
+anova1
+```
+     
+Notamos que el Chi es diferente de 0, por lo tanto, lo mejor sería utilizar un modelo que tenga menos variables. Se probará con distintos modelos y se probará cual es el más óptimo. Para ello se comprobará cuanto aporta cada variable y se retirán aquellas que no aporten.   
+    
+Debido a la anturaleza del modelo (compuesto por variables categóricas), y a la cantidad de variables presentada, realizar un test.multinom para determinar la relevancia de cada variable no es posible. Se ha intentado pero no se lograron obtener resultados. Por lo tanto, se elimarán variables a criterio. PAra determinar la probabilidad de votar por algun candidato, frente a no votar por ninguno.      
+    
+```{r}
+mod2 <- multinom(vb3n ~ idio2_peor + idio2_igual + prot3 + vb10 + ocup4a_trabaja +  ocup4a_no_trabaja + ocup4a_estudiante +ocup4a_hogar+edad_joven+edad_adulto, data = data1)
+summary(mod2)
+```
+     
+Se han eliminado las variables: sexo, nivel de satisfacción con la calidad de los servicios de salud públicos, si recibe o no ayuda monetaria del gobierno, y qué tan de acuerdo o en desacuerdo está usted con la siguiente frase? Cuando la madre trabaja fuera de la casa, los hijos sufren. Esto se debe a que estas variables no se aproximan tanto al tema como las otras trabajadas.    
+     
+```{r}
+anova2=anova(mod0,mod2)
+anova2
+```
+            
+Notamos que ahora el chi se aproxima mucho más a 0, por lo tanto este modelo es más relevante. Sin embargo, sigue sin llegar a 0. Por lo tanto, no es significativo y no sirve para predecir correctamente.    
+    
+```{r}
+stargazer(mod1,mod2,type ="text")
+```
+     
+En el stargazer podemos comprobar que en ambos modelos la mayoría de variablers son irrelevantes. Sin embargo, entre las que destacan tenemos edad=adulto, y los niveles de satisfacción con los servicios públicos. A pesar de esto, a grandes rasgos podemos concluir que este conjunto de variables no es apropiado para determinar el voto en elas elcciones presidenciales del 2016.        
+           
+# **Hallazgos**     
+     
+Como observamos en el desarrollo del RMD, la variable independiente y casi todas las dependientes son categóricas. Por lo tanto, en cuanto a medidas de tendencia central solo podemos obtener la moda. En el caso de la variable dependiente, PPK fue quien recibió más votos de parte los encuestados, seguido por Keiko y por blanco/viciado. En sexo, hay más hombres que mujeres. En cuanto a la edad, la media es 41,36, la mediana es 40 y la moda es 30. Además, la varianza es 208.8392 y la desviación estándar es 14.45127. Esto significa que los datos no se alejan mucho de la media; sin embargo, la presencia de datos atípicos sí altera este resultado. En cuanto a la situación económica con respecto al año pasado, el valor que corresponde a la moda es "igual". La mayoría no han participado en protestas, y no tienen afinidad con un partido político. La mayoría se siente "insatisfecha" con los servicios de salud públicos. La mayoría trabaja, no es beneficiario de ningún tipo de subsidios ni origramas de apoyo del Gobierno, y están "de acuerdo" con que si la madre trabaja los hijos sufren.
+    
+En cuanto a los clusters, aprendimos que R no nos recomendó dividir a la información en clusters, esto puede ser porque solo trabajamos con una variable numérica o por la cantidad diversa de datos. Sin embargo, igualmente creamos 3 clusters que fueron dividios de la siguiente manera: joven(408), adulto (329) y adulto mayor (206). De esta manera descubrimos que queines más participaron en esta encuesta fueron personas jóvenes, mientras que las personas de edad más avanzada participaron menos.   
+    
+Por último, al crear los modelos de regresión lógistica multinomial descubrimos cosas interesantes. Por ejemplo, ser mujer tuve una relación inversa con los candidatos. Sin embargo, en el caso de Keiko Fujimori, esta relación fue de -0.99... Esto quiere decir que ser mujer reduce las posiblidades de votar por Keiko. Por otro lado, notamos que los jóvenes tenían más posibilidades de votar por alguno de los candidatos que no trabajamos en el modelo. Además, los estudiantes tendrían más posibilidades de votar por Verónika Mendoza. Sin embargo, el hallazgo más importante fue comprobar que estas variables no son relevantes para explicar el voto en el 2016. Esto se debe a que ambos modelos creados resultaron no ser significativos. Esto puede explicarse a partir de distintas razones. Sin embargo sugerimos que explicar algo tan complejo como la decisión del voto, basándonos únicamente en ciertas variables aribitrarias puede resultar ineficiente. Además, tomando en cuenta que todas fueon categóricas, cuantificar un resultado resulta aún más complejo. A pesar de todo, hay variables que sí aportaron al modelo como edad_adulto y los niveles de satisfacción con los servicios públicos. Estas podrían ser utilizadas en un futuro análisis.    
+        
+# **Conclusiones**     
+     
+Tomando todo en cuenta, notamos que entender el comportamiento electoral es algo importante, ya que permite descubrir los factores decisivos para los resultados de las elecciones. De esta manera, se pueden entender mejor los intereses de la población. Sin embargo, este es un fenómeno complejo y difícil de analizar. Es por ello que esta investigación no alcanzó los objetivos esperados. Esto se debe a que nuestros modelos no resultaron ser relevantes para la explicación del comportamiento electoral. Sin embargo, debido a la importancia de este campo, recomendamos que se profundice la creación de modelos que expliquen este fenómeno, mediante el uso de variables más variadas y mejor cuantificables. Una limitación de nuestra investigación fue el uso exclusivo de variables categóricas, ya que estas limitaron de cierta forma nuestro análisis. También sería importante una comparación con las elecciones de este año, una vez que contemos con encuestas de LAPOP actualizadas. Comparar el cambio durante estos 5 años nos permitiría entender aún mejor el proceso.       
+          
+# **Bibliografia**  
+     
+Blais, André (2006). ¿Qué afecta la participación del votante?. Iztapalapa, Revista de Ciencias Sociales y Humanidades,  (61),13-33.[fecha de Consulta 19 de Diciembre de 2021]. ISSN: 0185-4259. Disponible en: https://www.redalyc.org/articulo.oa?id=39348720002              
+              
+CLINIC. (2021). ¿Cómo influye la edad de los votantes en los resultados de las elecciones? The Clinic - Reportajes, columnas, entrevistas y humor. https://www.theclinic.cl/2021/11/21/como-influye-la-edad-de-los-votantes-en-los-resultados-de-las-elecciones/               
+                  
+CONTRERAS, GONZALO, & NAVIA, PATRICIO. (2013). DIFERENCIAS GENERACIONALES EN LA PARTICIPACIÓN ELECTORAL EN CHILE, 1988-2010. Revista de ciencia política (Santiago), 33(2), 419-441. https://dx.doi.org/10.4067/S0718-090X2013000200001       
+        
+Grompone, Romeo. 2016. “Lo que queda del día: sobre partidos y sombras”. En: Jorge Aragón (Ed.). Participación, Competencia y Representación Política. Contribuciones para el debate. Lima: IEP.     
+              
+LAPOP. (2019). Barómetro de las Américas. Recuperado 29 de octubre de 2021
+https://www.vanderbilt.edu/lapop/peru/ABPer18-v12.0.7.1-Spa-190214_W.pdf     
+        
+Primicias. (2020). Cuánto puede influir el voto de los jóvenes y de la tercera edad en 2021. https://www.primicias.ec/noticias/politica/cuanto-influir-voto-jovenes-tercera-edad-2021/        
+                
+Morales, M., & Lara, C. (2020, 9 marzo). El efecto de la edad de los candidatos sobre la participación electoral. El caso de Chile. Revista de Sociologia e Política, 27(71). https://www.scielo.br/j/rsocp/a/4mSpnVknKJcbJVj6P65Tg9c/?lang=es         
+         
+Zavaleta, Mauricio. 2014. Coaliciones de independientes: las reglas no escritas de la política electoral. Lima: IEP. [pp. 27-73]
